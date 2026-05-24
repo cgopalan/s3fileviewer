@@ -14,7 +14,9 @@ A web app for browsing S3 buckets and querying text files with SQL. Built with G
 
 - Go 1.23+
 - AWS credentials configured via the [default credential chain](https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/configure-globals.html) (environment variables, `~/.aws/credentials`, or IAM role)
+- AWS user must have `AmazonS3ReadOnlyAccess` permission (only readonly is enough)
 - Network access on first run (DuckDB downloads the `httpfs` extension)
+
 
 ## Configuration
 
