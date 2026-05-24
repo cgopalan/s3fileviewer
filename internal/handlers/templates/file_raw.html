@@ -1,0 +1,16 @@
+{{define "file_raw_content"}}
+<section class="file-header">
+  <nav class="breadcrumbs">
+    <a href="/browse?bucket={{urlquery .Bucket}}&amp;prefix={{urlquery .BrowsePrefix}}">← Back to bucket</a>
+  </nav>
+  <h1>{{.Key}}</h1>
+  <p class="uri"><code>{{.S3URI}}</code></p>
+</section>
+
+<section class="card">
+  <p class="notice">This file doesn't appear tabular; SQL querying is unavailable.</p>
+  {{if .DescribeErr}}<p class="muted">Detection error: {{.DescribeErr}}</p>{{end}}
+  {{if .Truncated}}<p class="muted">Preview truncated at {{.PreviewBytes}} bytes.</p>{{end}}
+  <pre class="raw-preview">{{.Content}}</pre>
+</section>
+{{end}}

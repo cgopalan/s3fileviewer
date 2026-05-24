@@ -1,0 +1,14 @@
+{{define "partials/columns.html"}}
+<table class="columns-table">
+  <thead>
+    <tr><th>Column</th><th>Type</th></tr>
+  </thead>
+  <tbody>
+    {{range .Columns}}
+    <tr><td>{{.Name}}</td><td><code>{{.Type}}</code></td></tr>
+    {{else}}
+    <tr><td colspan="2" class="muted">No columns found.</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}

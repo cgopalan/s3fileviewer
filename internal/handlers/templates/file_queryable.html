@@ -1,0 +1,41 @@
+{{define "file_queryable_content"}}
+<section class="file-header">
+  <nav class="breadcrumbs">
+    <a href="/browse?bucket={{urlquery .Bucket}}&amp;prefix={{urlquery .BrowsePrefix}}">← Back to bucket</a>
+  </nav>
+  <h1>{{.Key}}</h1>
+  <p class="uri"><code>{{.S3URI}}</code></p>
+</section>
+
+<section class="file-grid">
+  <div class="pane columns-pane">
+    <h2>Columns</h2>
+    <div id="columns"
+         hx-get="/api/schema?bucket={{urlquery .Bucket}}&amp;key={{urlquery .Key}}"
+         hx-trigger="load"
+         hx-indicator="#schema-spinner">
+      <div id="schema-spinner" class="htmx-indicator">Loading schema…</div>
+    </div>
+  </div>
+
+  <div class="pane query-pane">
+    <h2>SQL Query</h2>
+    <form hx-post="/api/query"
+          hx-target="#results"
+          hx-indicator="#query-spinner">
+      <input type="hidden" name="bucket" value="{{.Bucket}}">
+      <input type="hidden" name="key" value="{{.Key}}">
+      <textarea name="query" rows="8" spellcheck="false">SELECT * FROM data LIMIT 100</textarea>
+      <button type="submit">Run Query</button>
+      <span id="query-spinner" class="htmx-indicator">Running…</span>
+    </form>
+  </div>
+</section>
+
+<section class="pane results-pane">
+  <h2>Results</h2>
+  <div id="results" class="results-container">
+    <p class="muted">Run a query to see results.</p>
+  </div>
+</section>
+{{end}}

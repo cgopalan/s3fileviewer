@@ -1,0 +1,55 @@
+{{define "browse_content"}}
+<section>
+  <nav class="breadcrumbs">
+    {{range $i, $c := .Breadcrumbs}}
+      {{if $i}}<span class="sep">/</span>{{end}}
+      {{if eq $c.Prefix $.CurrentPrefix}}
+        <span>{{$c.Label}}</span>
+      {{else}}
+        <a href="/browse?bucket={{urlquery $.Bucket}}&amp;prefix={{urlquery $c.Prefix}}">{{$c.Label}}</a>
+      {{end}}
+    {{end}}
+  </nav>
+
+  <h1>{{.Bucket}}</h1>
+  {{if .Prefix}}<p class="muted">Prefix: <code>{{.Prefix}}</code></p>{{end}}
+
+  <table class="file-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Size</th>
+        <th>Last Modified</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range .Prefixes}}
+      <tr>
+        <td>
+          <a href="/browse?bucket={{urlquery $.Bucket}}&amp;prefix={{urlquery .}}">📁 {{trimPrefix . $.Prefix}}</a>
+        </td>
+        <td>—</td>
+        <td>—</td>
+      </tr>
+      {{end}}
+      {{range .Objects}}
+      <tr class="{{if .IsBinary}}disabled{{end}}">
+        <td>
+          {{if .Viewable}}
+            <a href="/file?bucket={{urlquery $.Bucket}}&amp;key={{urlquery .Key}}">📄 {{trimPrefix .Key $.Prefix}}</a>
+          {{else}}
+            <span class="muted">📄 {{trimPrefix .Key $.Prefix}} (not supported — only .csv and .txt)</span>
+          {{end}}
+        </td>
+        <td>{{formatSize .Size}}</td>
+        <td>{{.LastModified}}</td>
+      </tr>
+      {{else}}
+      {{if not .Prefixes}}
+      <tr><td colspan="3" class="muted">No objects found.</td></tr>
+      {{end}}
+      {{end}}
+    </tbody>
+  </table>
+</section>
+{{end}}
