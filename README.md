@@ -38,6 +38,8 @@ go run ./cmd/server
 
 Open [http://localhost:8080](http://localhost:8080), enter a bucket name, and browse.
 
+![Screenshot](./s3fileviewer.png)
+
 ## Usage
 
 1. **Home** — Enter a bucket name and optional prefix, then click Browse.
