@@ -65,6 +65,3 @@ internal/files/      Text file detection and reader selection
 internal/handlers/   HTTP handlers, templates, and static assets
 ```
 
-## License
-
-MIT
