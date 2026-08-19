@@ -26,6 +26,10 @@ type QueryResult struct {
 	Truncated bool
 }
 
+type ZipMemberExtractor interface {
+	ExtractZipMember(ctx context.Context, bucket, key, member string) (string, error)
+}
+
 type Pool struct {
 	mu              sync.Mutex
 	db              *sql.DB
@@ -33,9 +37,12 @@ type Pool struct {
 	queryTimeoutSec int
 	awsRegion       string
 	s3Configured    bool
+	zipExtractor    ZipMemberExtractor
+	extractedKey    string
+	extractedPath   string
 }
 
-func NewPool(maxQueryRows, queryTimeoutSec int, awsRegion string) (*Pool, error) {
+func NewPool(maxQueryRows, queryTimeoutSec int, awsRegion string, zipExtractor ZipMemberExtractor) (*Pool, error) {
 	db, err := sql.Open("duckdb", "")
 	if err != nil {
 		return nil, fmt.Errorf("open duckdb: %w", err)
@@ -46,6 +53,7 @@ func NewPool(maxQueryRows, queryTimeoutSec int, awsRegion string) (*Pool, error)
 		maxQueryRows:    maxQueryRows,
 		queryTimeoutSec: queryTimeoutSec,
 		awsRegion:       awsRegion,
+		zipExtractor:    zipExtractor,
 	}
 
 	if err := p.init(); err != nil {
@@ -125,14 +133,63 @@ func escapeSQLString(s string) string {
 }
 
 func (p *Pool) Close() error {
+	p.removeExtractedFile()
 	return p.db.Close()
 }
 
-func (p *Pool) registerView(bucket, key string) (files.FileReader, error) {
-	if err := p.ensureS3Secret(); err != nil {
+func (p *Pool) removeExtractedFile() {
+	if p.extractedPath == "" {
+		return
+	}
+	os.Remove(p.extractedPath)
+	p.extractedPath = ""
+	p.extractedKey = ""
+}
+
+func extractCacheKey(bucket, key, member string) string {
+	return bucket + "\x00" + key + "\x00" + member
+}
+
+func (p *Pool) resolveSource(ctx context.Context, bucket, key, member string) (string, error) {
+	if member == "" {
+		return files.S3URI(bucket, key), nil
+	}
+	if p.zipExtractor == nil {
+		return "", fmt.Errorf("zip member extraction is not configured")
+	}
+
+	cacheKey := extractCacheKey(bucket, key, member)
+	if p.extractedKey == cacheKey && p.extractedPath != "" {
+		if _, err := os.Stat(p.extractedPath); err == nil {
+			return p.extractedPath, nil
+		}
+	}
+
+	p.removeExtractedFile()
+	path, err := p.zipExtractor.ExtractZipMember(ctx, bucket, key, member)
+	if err != nil {
+		return "", err
+	}
+	p.extractedKey = cacheKey
+	p.extractedPath = path
+	return path, nil
+}
+
+func (p *Pool) registerView(ctx context.Context, bucket, key, member string) (files.FileReader, error) {
+	source, err := p.resolveSource(ctx, bucket, key, member)
+	if err != nil {
 		return files.FileReader{}, err
 	}
-	reader := files.DetectReader(bucket, key)
+	if member == "" {
+		if err := p.ensureS3Secret(); err != nil {
+			return files.FileReader{}, err
+		}
+	}
+
+	reader, err := files.DetectReader(source, key, member)
+	if err != nil {
+		return files.FileReader{}, err
+	}
 	viewSQL := fmt.Sprintf("CREATE OR REPLACE VIEW data AS %s", reader.ViewSQL)
 	if _, err := p.db.Exec(viewSQL); err != nil {
 		return reader, fmt.Errorf("create view: %w", err)
@@ -140,15 +197,24 @@ func (p *Pool) registerView(bucket, key string) (files.FileReader, error) {
 	return reader, nil
 }
 
-func (p *Pool) TryDescribe(bucket, key string) error {
+func (p *Pool) TryDescribe(ctx context.Context, bucket, key, member string) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	if err := p.ensureS3Secret(); err != nil {
+	source, err := p.resolveSource(ctx, bucket, key, member)
+	if err != nil {
 		return err
 	}
+	if member == "" {
+		if err := p.ensureS3Secret(); err != nil {
+			return err
+		}
+	}
 
-	reader := files.DetectReader(bucket, key)
+	reader, err := files.DetectReader(source, key, member)
+	if err != nil {
+		return err
+	}
 	rows, err := p.db.Query(reader.DescribeSQL)
 	if err != nil {
 		return err
@@ -156,14 +222,14 @@ func (p *Pool) TryDescribe(bucket, key string) error {
 	return rows.Close()
 }
 
-func (p *Pool) Schema(ctx context.Context, bucket, key string) ([]Column, error) {
+func (p *Pool) Schema(ctx context.Context, bucket, key, member string) ([]Column, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(p.queryTimeoutSec)*time.Second)
 	defer cancel()
 
-	if _, err := p.registerView(bucket, key); err != nil {
+	if _, err := p.registerView(ctx, bucket, key, member); err != nil {
 		return nil, err
 	}
 
@@ -230,7 +296,7 @@ func ensureLimit(query string, maxRows int) string {
 	return fmt.Sprintf("%s LIMIT %d", query, maxRows)
 }
 
-func (p *Pool) Query(ctx context.Context, bucket, key, query string) (*QueryResult, error) {
+func (p *Pool) Query(ctx context.Context, bucket, key, member, query string) (*QueryResult, error) {
 	if err := ValidateQuery(query); err != nil {
 		return nil, err
 	}
@@ -241,7 +307,7 @@ func (p *Pool) Query(ctx context.Context, bucket, key, query string) (*QueryResu
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(p.queryTimeoutSec)*time.Second)
 	defer cancel()
 
-	if _, err := p.registerView(bucket, key); err != nil {
+	if _, err := p.registerView(ctx, bucket, key, member); err != nil {
 		return nil, err
 	}
 

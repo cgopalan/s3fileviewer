@@ -48,6 +48,7 @@ func New(cfg *config.Config, s3 *s3client.Client, db *duckdb.Pool) (*Handler, er
 		"templates/browse.html",
 		"templates/file_queryable.html",
 		"templates/file_raw.html",
+		"templates/file_zip.html",
 		"templates/partials/*.html",
 	)
 	if err != nil {

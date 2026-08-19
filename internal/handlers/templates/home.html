@@ -1,7 +1,7 @@
 {{define "home_content"}}
 <section class="card">
   <h1>Browse an S3 Bucket</h1>
-  <p class="muted">Enter a bucket name to browse .csv and .txt files. AWS credentials are loaded from the default credential chain.</p>
+  <p class="muted">Enter a bucket name to browse .csv, .txt, .parquet, and .zip files. AWS credentials are loaded from the default credential chain.</p>
   <form method="get" action="/browse" class="form">
     <label for="bucket">Bucket name</label>
     <input type="text" id="bucket" name="bucket" required placeholder="my-bucket" pattern="[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]" title="Valid S3 bucket name">

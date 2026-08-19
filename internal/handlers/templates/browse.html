@@ -38,7 +38,7 @@
           {{if .Viewable}}
             <a href="/file?bucket={{urlquery $.Bucket}}&amp;key={{urlquery .Key}}">📄 {{trimPrefix .Key $.Prefix}}</a>
           {{else}}
-            <span class="muted">📄 {{trimPrefix .Key $.Prefix}} (not supported — only .csv and .txt)</span>
+            <span class="muted">📄 {{trimPrefix .Key $.Prefix}} (not supported)</span>
           {{end}}
         </td>
         <td>{{formatSize .Size}}</td>

@@ -1,0 +1,44 @@
+{{define "file_zip_content"}}
+<section class="file-header">
+  <nav class="breadcrumbs">
+    <a href="/browse?bucket={{urlquery .Bucket}}&amp;prefix={{urlquery .BrowsePrefix}}">← Back to bucket</a>
+  </nav>
+  <h1>{{.Key}}</h1>
+  <p class="uri"><code>{{.S3URI}}</code></p>
+</section>
+
+<section class="card">
+  <h2>Archive contents</h2>
+  <p class="muted">Select a file to query with SQL.</p>
+  <table class="file-table">
+    <thead>
+      <tr>
+        <th>File</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range .Entries}}
+      <tr class="{{if not .Queryable}}disabled{{end}}">
+        <td>
+          {{if .Queryable}}
+            <a href="/file?bucket={{urlquery $.Bucket}}&amp;key={{urlquery $.Key}}&amp;member={{urlquery .Name}}">📄 {{.Name}}</a>
+          {{else}}
+            <span class="muted">📄 {{.Name}}</span>
+          {{end}}
+        </td>
+        <td>
+          {{if .Queryable}}
+            <span>queryable</span>
+          {{else}}
+            <span class="muted">not supported</span>
+          {{end}}
+        </td>
+      </tr>
+      {{else}}
+      <tr><td colspan="2" class="muted">No files found in archive.</td></tr>
+      {{end}}
+    </tbody>
+  </table>
+</section>
+{{end}}

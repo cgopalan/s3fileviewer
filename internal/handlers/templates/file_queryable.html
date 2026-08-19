@@ -11,7 +11,7 @@
   <div class="pane columns-pane">
     <h2>Columns</h2>
     <div id="columns"
-         hx-get="/api/schema?bucket={{urlquery .Bucket}}&amp;key={{urlquery .Key}}"
+         hx-get="/api/schema?bucket={{urlquery .Bucket}}&amp;key={{urlquery .Key}}{{if .Member}}&amp;member={{urlquery .Member}}{{end}}"
          hx-trigger="load"
          hx-indicator="#schema-spinner">
       <div id="schema-spinner" class="htmx-indicator">Loading schema…</div>
@@ -25,6 +25,7 @@
           hx-indicator="#query-spinner">
       <input type="hidden" name="bucket" value="{{.Bucket}}">
       <input type="hidden" name="key" value="{{.Key}}">
+      {{if .Member}}<input type="hidden" name="member" value="{{.Member}}">{{end}}
       <textarea name="query" rows="8" spellcheck="false">SELECT * FROM data LIMIT 100</textarea>
       <button type="submit">Run Query</button>
       <span id="query-spinner" class="htmx-indicator">Running…</span>
