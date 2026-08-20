@@ -28,7 +28,7 @@ func main() {
 		log.Fatalf("s3 client: %v", err)
 	}
 
-	db, err := duckdb.NewPool(cfg.MaxQueryRows, cfg.QueryTimeoutSec, cfg.AWSRegion)
+	db, err := duckdb.NewPool(cfg.MaxQueryRows, cfg.QueryTimeoutSec, cfg.AWSRegion, s3)
 	if err != nil {
 		log.Fatalf("duckdb: %v", err)
 	}

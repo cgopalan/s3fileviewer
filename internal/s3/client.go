@@ -6,6 +6,7 @@ import (
 	"io"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
@@ -26,6 +27,14 @@ type ListResult struct {
 type Client struct {
 	client *s3.Client
 	region string
+
+	zipMu        sync.Mutex
+	zipCacheKey  string
+	zipCachePath string
+}
+
+func zipCacheKey(bucket, key string) string {
+	return bucket + "\x00" + key
 }
 
 func NewClient(ctx context.Context, region string) (*Client, error) {

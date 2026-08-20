@@ -7,6 +7,7 @@ import (
 func (h *Handler) Schema(w http.ResponseWriter, r *http.Request) {
 	bucket := r.URL.Query().Get("bucket")
 	key := r.URL.Query().Get("key")
+	member := r.URL.Query().Get("member")
 
 	if err := h.validateBucket(bucket); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -17,7 +18,7 @@ func (h *Handler) Schema(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cols, err := h.duckdb.Schema(r.Context(), bucket, key)
+	cols, err := h.duckdb.Schema(r.Context(), bucket, key, member)
 	if err != nil {
 		h.renderPartial(w, "partials/error.html", map[string]any{"Error": err.Error()})
 		return
@@ -34,6 +35,7 @@ func (h *Handler) Query(w http.ResponseWriter, r *http.Request) {
 
 	bucket := r.FormValue("bucket")
 	key := r.FormValue("key")
+	member := r.FormValue("member")
 	query := r.FormValue("query")
 
 	if err := h.validateBucket(bucket); err != nil {
@@ -45,7 +47,7 @@ func (h *Handler) Query(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.duckdb.Query(r.Context(), bucket, key, query)
+	result, err := h.duckdb.Query(r.Context(), bucket, key, member, query)
 	if err != nil {
 		h.renderPartial(w, "partials/error.html", map[string]any{"Error": err.Error()})
 		return

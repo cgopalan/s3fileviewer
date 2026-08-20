@@ -5,7 +5,7 @@ A web app for browsing S3 buckets and querying text files with SQL. Built with G
 ## Features
 
 - Browse S3 buckets with folder-style prefix navigation
-- View `.csv` and `.txt` files only
+- View `.csv`, `.txt`, `.parquet`, and `.zip` files
 - Inspect column names and types for tabular files
 - Run SQL queries against a file using DuckDB (via the `data` view)
 - Raw text preview fallback for unstructured files
@@ -43,11 +43,13 @@ Open [http://localhost:8080](http://localhost:8080), enter a bucket name, and br
 ## Usage
 
 1. **Home** — Enter a bucket name and optional prefix, then click Browse.
-2. **Browse** — Click folders to navigate; click `.csv` or `.txt` files to open them. Other file types are listed but not viewable.
+2. **Browse** — Click folders to navigate; click supported files (`.csv`, `.txt`, `.parquet`, `.zip`) to open them. Other file types are listed but not viewable.
 3. **File view** — For tabular files:
    - **Columns** pane loads automatically with schema info
    - **SQL Query** pane runs queries against the `data` view (e.g. `SELECT * FROM data LIMIT 100`)
    - **Results** pane shows query output
+
+For `.zip` archives, a contents listing is shown first. Click a supported inner file (`.csv`, `.txt`, `.parquet`) to query it.
 
 For unstructured text files, a raw preview is shown instead of the SQL interface.
 
@@ -65,7 +67,7 @@ cmd/server/          HTTP server entrypoint
 internal/config/     Environment configuration
 internal/s3/         AWS S3 listing and object reads
 internal/duckdb/     DuckDB pool, schema, and query execution
-internal/files/      Text file detection and reader selection
+internal/files/      File format detection and reader selection
 internal/handlers/   HTTP handlers, templates, and static assets
 ```
 

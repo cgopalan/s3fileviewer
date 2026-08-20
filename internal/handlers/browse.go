@@ -33,9 +33,9 @@ func (h *Handler) Browse(w http.ResponseWriter, r *http.Request) {
 	var objects []browseObject
 	for _, obj := range result.Objects {
 		viewable := false
-		if files.IsAllowedExtension(obj.Key) {
+		if files.IsSupportedExtension(obj.Key) {
 			sample, _ := h.s3.GetObjectSample(r.Context(), bucket, obj.Key, 512)
-			viewable = files.IsViewableTextFile(obj.Key, sample)
+			viewable = files.IsOpenable(obj.Key, sample)
 		}
 		objects = append(objects, browseObject{
 			Key:          obj.Key,
